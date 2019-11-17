@@ -6,4 +6,11 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: Build the Docker Image
-      run: docker build -t docker-jenkins:$(date +%Y%m%d_%s) .
+      run: docker build -t "docker.pkg.github.com/nixknight/docker-jenkins/docker-jenkins:$(date +%Y%m%d)" .
+    - name: Create GitHub Package
+      env:
+        GITHUB_PACKAGE_REGISTRY_USERNAME: ${{ secrets.GITHUB_PACKAGE_REGISTRY_USERNAME }}
+        GITHUB_PACKAGE_REGISTRY_TOKEN: ${{ secrets.GITHUB_PACKAGE_REGISTRY_TOKEN }}
+      run: |
+        docker login docker.pkg.github.com -u ${GITHUB_PACKAGE_REGISTRY_USERNAME} -p ${GITHUB_PACKAGE_REGISTRY_TOKEN}
+        docker push "docker.pkg.github.com/nixknight/docker-jenkins/docker-jenkins:$(date +%Y%m%d)"
