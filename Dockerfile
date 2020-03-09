@@ -1,6 +1,6 @@
 FROM openjdk:11-jdk-slim-buster
 
-RUN apt-get update && apt-get upgrade -y && apt-get install -y unzip git curl python python3 virtualenv python3-virtualenv python3-dev build-essential libmariadbclient-dev libffi-dev libssl-dev && curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash && apt-get install -y git-lfs && git lfs install && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get upgrade -y && apt-get install -y unzip git curl python python3 virtualenv python3-virtualenv python3-dev build-essential libfreetype6 libmariadbclient-dev libffi-dev libssl-dev && curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash && apt-get install -y git-lfs && git lfs install && rm -rf /var/lib/apt/lists/*
 
 ARG user=jenkins
 ARG group=jenkins
