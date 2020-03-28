@@ -6,11 +6,11 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Build the Docker Image
-      run: docker build . --file Dockerfile --tag "nixknight/jenkins:lts-2.204.5"
+      run: docker build . --file Dockerfile --tag "nixknight/jenkins:lts-2.222.1"
     - name: Push to Docker Hub Repository
       env:
         DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
         DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
       run: |
         docker login -u ${DOCKER_HUB_USERNAME} -p ${DOCKER_HUB_TOKEN}
-        docker push "nixknight/jenkins:lts-2.204.5"
+        docker push "nixknight/jenkins:lts-2.222.1"
