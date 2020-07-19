@@ -29,7 +29,11 @@ jobs:
         shell: bash
         working-directory: ${GITHUB_WORKSPACE}
         run: |
-          OLD_JENKINS_STABLE_VERSION=$(cat old_artifacts/jenkins_stable_version.txt)
+          if [ -f "old_artifacts/jenkins_stable_version.txt" ] ; then
+            OLD_JENKINS_STABLE_VERSION=$(cat old_artifacts/jenkins_stable_version.txt)
+          else
+            OLD_JENKINS_STABLE_VERSION=""
+          fi
           CURRENT_JENKINS_STABLE_VERSION=$(curl -L http://updates.jenkins-ci.org/stable/latestCore.txt)
           if [ "$OLD_JENKINS_STABLE_VERSION" == "$CURRENT_JENKINS_STABLE_VERSION" ] ; then
             echo -e "New Jenkins stable version is not available."
