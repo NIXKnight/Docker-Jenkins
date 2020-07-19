@@ -1,4 +1,4 @@
-name: Build Jenkins Stable Docker Image
+name: Build Jenkins LTS Docker Image
 on:
   push:
     branches:
@@ -24,7 +24,7 @@ jobs:
           path: "${GITHUB_WORKSPACE}/old_artifacts"
           repo: ${{ github.repository }}
 
-      - name: Check for New Jenkins Stable Version Availability
+      - name: Check for New Jenkins LTS Version Availability
         id: vars
         shell: bash
         working-directory: ${GITHUB_WORKSPACE}
@@ -44,20 +44,20 @@ jobs:
             echo ::set-output name=CURRENT_JENKINS_STABLE_VERSION::${CURRENT_JENKINS_STABLE_VERSION}
           fi
 
-      - name: Build Jenkins Stable Latest Docker Image
+      - name: Build Jenkins LTS Latest Docker Image
         shell: bash
         env:
           USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
         working-directory: ${GITHUB_WORKSPACE}/Docker-Jenkins
         run: |
           docker build . --file Dockerfile --build-arg JENKINS_VERSION=${{ steps.vars.outputs.CURRENT_JENKINS_STABLE_VERSION }} \
-            --tag docker.pkg.github.com/${USERNAME}/docker-jenkins/docker-jenkins:${{ steps.vars.outputs.CURRENT_JENKINS_STABLE_VERSION }} \
-            --tag docker.pkg.github.com/${USERNAME}/docker-jenkins/docker-jenkins:latest \
-            --tag "${USERNAME}/jenkins:${{ steps.vars.outputs.CURRENT_JENKINS_STABLE_VERSION }}" \
-            --tag "${USERNAME}/jenkins:latest"
+            --tag docker.pkg.github.com/${USERNAME}/docker-jenkins/docker-jenkins:lts-${{ steps.vars.outputs.CURRENT_JENKINS_STABLE_VERSION }} \
+            --tag docker.pkg.github.com/${USERNAME}/docker-jenkins/docker-jenkins:lts-latest \
+            --tag "${USERNAME}/jenkins:lts-${{ steps.vars.outputs.CURRENT_JENKINS_STABLE_VERSION }}" \
+            --tag "${USERNAME}/jenkins:lts-latest"
         if: ${{ steps.vars.outputs.BUILD_JENKINS_STABLE_VERSION }}
 
-      - name: Push Jenkins Stable Latest Docker Image to Docker Hub and GitHub Registries
+      - name: Push Jenkins LTS Latest Docker Image to Docker Hub and GitHub Registries
         shell: bash
         env:
           USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
@@ -65,22 +65,22 @@ jobs:
           DOCKER_GITHUB_TOKEN: ${{ secrets.DOCKER_GITHUB_TOKEN }}
         run: |
           docker login -u ${USERNAME} -p ${DOCKER_HUB_TOKEN}
-          docker push "${USERNAME}/jenkins:${{ steps.vars.outputs.CURRENT_JENKINS_STABLE_VERSION }}"
-          docker push "${USERNAME}/jenkins:latest"
+          docker push "${USERNAME}/jenkins:lts-${{ steps.vars.outputs.CURRENT_JENKINS_STABLE_VERSION }}"
+          docker push "${USERNAME}/jenkins:lts-latest"
           docker logout
           docker login docker.pkg.github.com -u ${USERNAME} -p ${DOCKER_GITHUB_TOKEN}
-          docker push "docker.pkg.github.com/${USERNAME}/docker-jenkins/docker-jenkins:${{ steps.vars.outputs.CURRENT_JENKINS_STABLE_VERSION }}"
-          docker push "docker.pkg.github.com/${USERNAME}/docker-jenkins/docker-jenkins:latest"
+          docker push "docker.pkg.github.com/${USERNAME}/docker-jenkins/docker-jenkins:lts-${{ steps.vars.outputs.CURRENT_JENKINS_STABLE_VERSION }}"
+          docker push "docker.pkg.github.com/${USERNAME}/docker-jenkins/docker-jenkins:lts-latest"
           docker logout
         if: ${{ steps.vars.outputs.BUILD_JENKINS_STABLE_VERSION }}
 
-      - name: Send Telegram Notification for Jenkins Stable Build
+      - name: Send Telegram Notification for Jenkins LTS Build
         shell: bash
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          curl -s -X POST https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage -d chat_id=${TELEGRAM_CHAT_ID} -d text="Docker image for Jenkins stable updated to ${{ steps.vars.outputs.CURRENT_JENKINS_STABLE_VERSION }}"
+          curl -s -X POST https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage -d chat_id=${TELEGRAM_CHAT_ID} -d text="Docker image for Jenkins LTS updated to ${{ steps.vars.outputs.CURRENT_JENKINS_STABLE_VERSION }}"
         if: ${{ steps.vars.outputs.BUILD_JENKINS_STABLE_VERSION }}
 
       - name: Upload Build Artifacts
