@@ -1,16 +1,85 @@
-name: Docker Image CI
-on: [push]
+name: Build Jenkins Stable Docker Image
+on:
+  push:
+    branches:
+      - master
+  schedule:
+    - cron:  '0 0 * * *'
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: Build the Docker Image
-      run: docker build . --file Dockerfile --tag "nixknight/jenkins:lts-2.235.2"
-    - name: Push to Docker Hub Repository
-      env:
-        DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
-        DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
-      run: |
-        docker login -u ${DOCKER_HUB_USERNAME} -p ${DOCKER_HUB_TOKEN}
-        docker push "nixknight/jenkins:lts-2.235.2"
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+        with:
+          path: "${GITHUB_WORKSPACE}/Docker-Jenkins"
+
+      - name: Download Artifacts of Last Workflow
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          github_token: ${{ secrets.DOCKER_GITHUB_TOKEN }}
+          workflow: dockerimage.yml
+          name: 'JENKINS_STABLE_VERSION'
+          path: "${GITHUB_WORKSPACE}/old_artifacts"
+          repo: ${{ github.repository }}
+
+      - name: Check for New Jenkins Stable Version Availability
+        id: vars
+        shell: bash
+        working-directory: ${GITHUB_WORKSPACE}
+        run: |
+          OLD_JENKINS_STABLE_VERSION=$(cat ${GITHUB_WORKSPACE}/old_artifacts/jenkins_stable_version.txt)
+          CURRENT_JENKINS_STABLE_VERSION=$(curl -L http://updates.jenkins-ci.org/stable/latestCore.txt)
+          if [ "$OLD_JENKINS_STABLE_VERSION" == "$CURRENT_JENKINS_STABLE_VERSION" ] ; then
+            echo -e "New Jenkins stable version is not available."
+          else
+            echo -e "New Jenkins stable version available."
+            echo -e $CURRENT_JENKINS_STABLE_VERSION > jenkins_stable_version.txt
+            echo ::set-output name=BUILD_JENKINS_STABLE_VERSION::true
+            echo ::set-output name=CURRENT_JENKINS_STABLE_VERSION::${CURRENT_JENKINS_STABLE_VERSION}
+          fi
+
+      - name: Build Jenkins Stable Latest Docker Image
+        shell: bash
+        env:
+          USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+        working-directory: ${GITHUB_WORKSPACE}/Docker-Jenkins
+        run: |
+          docker build . --file Dockerfile --build-arg JENKINS_VERSION=${{ steps.vars.outputs.CURRENT_JENKINS_STABLE_VERSION }} \
+            --tag docker.pkg.github.com/${USERNAME}/docker-jenkins/docker-jenkins:${{ steps.vars.outputs.CURRENT_JENKINS_STABLE_VERSION }} \
+            --tag docker.pkg.github.com/${USERNAME}/docker-jenkins/docker-jenkins:latest \
+            --tag "${USERNAME}/jenkins:${{ steps.vars.outputs.CURRENT_JENKINS_STABLE_VERSION }}" \
+            --tag "${USERNAME}/jenkins:latest"
+        if: ${{ steps.vars.outputs.BUILD_JENKINS_STABLE_VERSION }}
+
+      - name: Push Jenkins Stable Latest Docker Image to Docker Hub and GitHub Registries
+        shell: bash
+        env:
+          USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+          DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
+          DOCKER_GITHUB_TOKEN: ${{ secrets.DOCKER_GITHUB_TOKEN }}
+        run: |
+          docker login -u ${USERNAME} -p ${DOCKER_HUB_TOKEN}
+          docker push "${USERNAME}/jenkins:${{ steps.vars.outputs.CURRENT_JENKINS_STABLE_VERSION }}"
+          docker push "${USERNAME}/jenkins:latest"
+          docker logout
+          docker login docker.pkg.github.com -u ${USERNAME} -p ${DOCKER_GITHUB_TOKEN}
+          docker push "docker.pkg.github.com/${USERNAME}/docker-jenkins/docker-jenkins:${{ steps.vars.outputs.CURRENT_JENKINS_STABLE_VERSION }}"
+          docker push "docker.pkg.github.com/${USERNAME}/docker-jenkins/docker-jenkins:latest"
+          docker logout
+        if: ${{ steps.vars.outputs.BUILD_JENKINS_STABLE_VERSION }}
+
+      - name: Send Telegram Notification for Jenkins Stable Build
+        shell: bash
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          curl -s -X POST https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage -d chat_id=${TELEGRAM_CHAT_ID} -d text="Docker image for Jenkins stable updated to ${{ steps.vars.outputs.CURRENT_JENKINS_STABLE_VERSION }}"
+        if: ${{ steps.vars.outputs.BUILD_JENKINS_STABLE_VERSION }}
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@master
+        with:
+          name: 'JENKINS_STABLE_VERSION'
+          path: "${GITHUB_WORKSPACE}/jenkins_stable_version.txt"
