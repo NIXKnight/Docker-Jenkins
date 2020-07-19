@@ -1,16 +1,63 @@
-name: Docker Image CI
-on: [push]
+name: Build Jenkins Stable Docker Image
+on:
+  push:
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: Build the Docker Image
-      run: docker build . --file Dockerfile --tag "nixknight/jenkins:lts-2.235.2"
-    - name: Push to Docker Hub Repository
-      env:
-        DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
-        DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
-      run: |
-        docker login -u ${DOCKER_HUB_USERNAME} -p ${DOCKER_HUB_TOKEN}
-        docker push "nixknight/jenkins:lts-2.235.2"
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+        with:
+          path: "${GITHUB_WORKSPACE}/Docker-Jenkins"
+
+      - name: Check New Jenkins Stable Version Availability
+        id: vars
+        shell: bash
+        working-directory: ${GITHUB_WORKSPACE}
+        run: |
+          CURRENT_JENKINS_STABLE=$(curl -L http://updates.jenkins-ci.org/stable/latestCore.txt)
+          echo -e $CURRENT_JENKINS_STABLE > jenkins_stable_version.txt
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@master
+        with:
+          name: 'JENKINS_STABLE_VERSION'
+          path: "${GITHUB_WORKSPACE}/jenkins_stable_version.txt"
+
+      - name: Download artifact
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          github_token: ${{secrets.MYTOKEN}}
+          workflow: dockerimage.yml
+          name: 'JENKINS_STABLE_VERSION'
+          path: "${GITHUB_WORKSPACE}/old_artifacts"
+          # Optional, defaults to current repo
+          repo: ${{ github.repository }}
+
+      # - name: Download Artifacts
+      #   uses: actions/download-artifact@v2
+      #   id: download
+      #   with:
+      #     name: 'JENKINS_STABLE_VERSION'
+      #     path: "${GITHUB_WORKSPACE}/old_artifacts/"
+
+      # - name: Download Artifacts
+      #   id: old_artifacts
+      #   shell: bash
+      #   working-directory: ${GITHUB_WORKSPACE}
+      #   run: |
+      #     CURRENT_JENKINS_STABLE=$(curl -L http://updates.jenkins-ci.org/stable/latestCore.txt)
+      #     echo -e $CURRENT_JENKINS_STABLE > jenkins_stable_version.txt
+
+      - name: Display structure of downloaded files
+        run: ls -lah ${GITHUB_WORKSPACE}/old_artifacts
+
+    # - name: Build the Docker Image
+    #   run: docker build . --file Dockerfile --tag "nixknight/jenkins:lts-2.235.2"
+    # - name: Push to Docker Hub Repository
+    #   env:
+    #     DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+    #     DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
+    #   run: |
+    #     docker login -u ${DOCKER_HUB_USERNAME} -p ${DOCKER_HUB_TOKEN}
+    #     docker push "nixknight/jenkins:lts-2.235.2"
