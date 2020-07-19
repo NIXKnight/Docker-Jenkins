@@ -16,6 +16,7 @@ jobs:
 
       - name: Download Artifacts of Last Workflow
         uses: dawidd6/action-download-artifact@v2
+        continue-on-error: true
         with:
           github_token: ${{ secrets.DOCKER_GITHUB_TOKEN }}
           workflow: dockerimage.yml
