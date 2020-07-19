@@ -14,14 +14,14 @@ jobs:
         with:
           path: "${GITHUB_WORKSPACE}/Docker-Jenkins"
 
-      - name: Download Artifacts of Last Workflow
+      - name: Download Artifact of Last Workflow
         uses: dawidd6/action-download-artifact@v2
         continue-on-error: true
         with:
           github_token: ${{ secrets.DOCKER_GITHUB_TOKEN }}
           workflow: dockerimage.yml
           name: 'JENKINS_STABLE_VERSION'
-          path: "${GITHUB_WORKSPACE}/old_artifacts"
+          path: "${GITHUB_WORKSPACE}/old_artifact"
           repo: ${{ github.repository }}
 
       - name: Check for New Jenkins LTS Version Availability
@@ -29,17 +29,17 @@ jobs:
         shell: bash
         working-directory: ${GITHUB_WORKSPACE}
         run: |
-          if [ -f "old_artifacts/jenkins_stable_version.txt" ] ; then
-            OLD_JENKINS_STABLE_VERSION=$(cat old_artifacts/jenkins_stable_version.txt)
+          if [ -f "old_artifact/jenkins_stable_version.txt" ] ; then
+            OLD_JENKINS_STABLE_VERSION=$(cat old_artifact/jenkins_stable_version.txt)
           else
             OLD_JENKINS_STABLE_VERSION=""
           fi
           CURRENT_JENKINS_STABLE_VERSION=$(curl -L http://updates.jenkins-ci.org/stable/latestCore.txt)
           if [ "$OLD_JENKINS_STABLE_VERSION" == "$CURRENT_JENKINS_STABLE_VERSION" ] ; then
             echo -e "New Jenkins stable version is not available."
+            echo ::set-output name=CURRENT_JENKINS_STABLE_VERSION::${CURRENT_JENKINS_STABLE_VERSION}
           else
             echo -e "New Jenkins stable version available."
-            echo -e $CURRENT_JENKINS_STABLE_VERSION > jenkins_stable_version.txt
             echo ::set-output name=BUILD_JENKINS_STABLE_VERSION::true
             echo ::set-output name=CURRENT_JENKINS_STABLE_VERSION::${CURRENT_JENKINS_STABLE_VERSION}
           fi
@@ -83,7 +83,12 @@ jobs:
           curl -s -X POST https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage -d chat_id=${TELEGRAM_CHAT_ID} -d text="Docker image for Jenkins LTS updated to ${{ steps.vars.outputs.CURRENT_JENKINS_STABLE_VERSION }}"
         if: ${{ steps.vars.outputs.BUILD_JENKINS_STABLE_VERSION }}
 
-      - name: Upload Build Artifacts
+      - name: Write Artifact File
+        shell: bash
+        working-directory: ${GITHUB_WORKSPACE}
+        run: echo -e ${{ steps.vars.outputs.CURRENT_JENKINS_STABLE_VERSION }} > jenkins_stable_version.txt
+
+      - name: Upload Artifact
         uses: actions/upload-artifact@master
         with:
           name: 'JENKINS_STABLE_VERSION'
