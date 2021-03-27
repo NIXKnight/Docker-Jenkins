@@ -53,6 +53,9 @@ ENV JENKINS_UC_EXPERIMENTAL=https://updates.jenkins.io/experimental
 ENV JENKINS_INCREMENTALS_REPO_MIRROR=https://repo.jenkins-ci.org/incrementals
 RUN chown -R ${user} "$JENKINS_HOME" "$REF"
 
+ARG PLUGIN_CLI_URL=https://github.com/jenkinsci/plugin-installation-manager-tool/releases/download/2.9.0/jenkins-plugin-manager-2.9.0.jar
+RUN curl -fsSL ${PLUGIN_CLI_URL} -o /usr/lib/jenkins-plugin-manager.jar
+
 # for main web interface:
 EXPOSE ${http_port}
 
@@ -70,5 +73,6 @@ COPY tini-shim.sh /bin/tini
 COPY plugins.txt /usr/share/jenkins/ref/plugins.txt
 COPY plugins.sh /usr/local/bin/plugins.sh
 COPY install-plugins.sh /usr/local/bin/install-plugins.sh
-RUN /usr/local/bin/install-plugins.sh < /usr/share/jenkins/ref/plugins.txt
+COPY jenkins-plugin-cli.sh /bin/jenkins-plugin-cli
+RUN /bin/jenkins-plugin-cli -f /usr/share/jenkins/ref/plugins.txt
 ENTRYPOINT ["/sbin/tini", "--", "/usr/local/bin/jenkins.sh"]
