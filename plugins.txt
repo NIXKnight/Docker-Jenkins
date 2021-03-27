@@ -6,7 +6,6 @@ ws-cleanup
 external-monitor-job
 display-url-api
 workflow-durable-task-step
-jquery-ui
 ansicolor
 jjwt-api
 simple-theme-plugin
@@ -75,7 +74,6 @@ javadoc
 variant
 cloudbees-folder
 branch-api
-multiple-scms
 snakeyaml-api
 okhttp-api
 groovy
