@@ -16,5 +16,4 @@ RUN set -eux; \
     rm -rvf /var/lib/apt/lists/*
 USER jenkins
 COPY plugins.txt /usr/share/jenkins/ref/plugins.txt
-COPY jenkins.sh /usr/local/bin/jenkins.sh
 RUN /usr/local/bin/install-plugins.sh < /usr/share/jenkins/ref/plugins.txt
