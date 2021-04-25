@@ -1,5 +1,7 @@
 ARG JENKINS_VERSION
 FROM jenkins/jenkins:${JENKINS_VERSION}-lts-jdk11
+ARG DOCKER_JENKINS_GROUP_ID
+ENV DOCKER_JENKINS_GROUP_ID $DOCKER_JENKINS_GROUP_ID
 USER root
 RUN set -eux; \
     apt-get update; \
@@ -11,6 +13,7 @@ RUN set -eux; \
     curl -L "https://github.com/docker/compose/releases/download/$(git ls-remote --tags "https://github.com/docker/compose" | awk '{print $2}' | grep -v '{}' | awk -F"/" '{print $3}' | sort -n -t. -k1,1 -k2,2 -k3,3 | tail -n 1)/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose; \
     chmod +x /usr/local/bin/docker-compose; \
     usermod -a -G docker jenkins; \
+    groupmod -g $DOCKER_JENKINS_GROUP_ID docker; \
     rm -rvf /var/lib/apt/lists/*
 USER jenkins
 COPY plugins.txt /usr/share/jenkins/ref/plugins.txt

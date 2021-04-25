@@ -48,9 +48,11 @@ jobs:
         shell: bash
         env:
           USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+          JENKINS_DOCKER_GROUP_ID: ${{ secrets.JENKINS_DOCKER_GROUP_ID }}
         working-directory: ${GITHUB_WORKSPACE}/Docker-Jenkins
         run: |
-          docker build . --file Dockerfile --build-arg JENKINS_VERSION=${{ steps.vars.outputs.CURRENT_JENKINS_STABLE_VERSION }} \
+          echo -e "Jenkins Group ID is ${JENKINS_DOCKER_GROUP_ID}"
+          docker build . --file Dockerfile --build-arg JENKINS_VERSION=${{ steps.vars.outputs.CURRENT_JENKINS_STABLE_VERSION }} --build-arg DOCKER_JENKINS_GROUP_ID="${JENKINS_DOCKER_GROUP_ID}" \
             --tag docker.pkg.github.com/${USERNAME}/docker-jenkins/docker-jenkins:lts-${{ steps.vars.outputs.CURRENT_JENKINS_STABLE_VERSION }} \
             --tag docker.pkg.github.com/${USERNAME}/docker-jenkins/docker-jenkins:lts-latest \
             --tag "${USERNAME}/jenkins:lts-${{ steps.vars.outputs.CURRENT_JENKINS_STABLE_VERSION }}" \
