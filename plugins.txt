@@ -88,3 +88,5 @@ pipeline-milestone-step
 envinject-api
 ssh-credentials
 credentials-binding
+docker-plugin
+docker-workflow
