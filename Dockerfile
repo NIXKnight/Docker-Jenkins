@@ -17,4 +17,5 @@ RUN set -eux; \
     rm -rvf /var/lib/apt/lists/*
 USER jenkins
 COPY plugins.txt /usr/share/jenkins/ref/plugins.txt
+ENV DOCKER_HOST unix:///var/run/docker.sock
 RUN /usr/local/bin/install-plugins.sh < /usr/share/jenkins/ref/plugins.txt
