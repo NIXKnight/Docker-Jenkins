@@ -1,0 +1,43 @@
+jenkins:
+  slaveAgentPort: ${JENKINS_SLAVE_AGENT_PORT}
+  systemMessage: ${JENKINS_SYSTEM_MESSAGE}
+  agentProtocols:
+    - JNLP4-connect
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+  numExecutors: ${JENKINS_NUM_EXECUTORS}
+  primaryView:
+    all:
+      name: "all"
+  remotingSecurity:
+    enabled: true
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: ${JENKINS_ADMIN_USERNAME}
+          password: ${JENKINS_ADMIN_PASSWORD}
+  updateCenter:
+    sites:
+    - id: "default"
+      url: "https://updates.jenkins.io/update-center.json"
+security:
+  apiToken:
+    creationOfLegacyTokenEnabled: false
+    tokenGenerationOnCreationEnabled: false
+    usageStatisticsEnabled: true
+  envInject:
+    enableLoadingFromMaster: false
+    enablePermissions: false
+    hideInjectedVars: false
+  globalJobDslSecurityConfiguration:
+    useScriptSecurity: false
+  sSHD:
+    port: -1
+unclassified:
+  location:
+    adminAddress: "${JENKINS_ADMIN_EMAIL_ADDRESS}"
+    url: "${JENKINS_URL}"
+  shell:
+    shell: "/bin/bash"

@@ -16,6 +16,8 @@ RUN set -eux; \
     groupmod -g $DOCKER_JENKINS_GROUP_ID docker; \
     rm -rvf /var/lib/apt/lists/*
 USER jenkins
-COPY plugins.txt /usr/share/jenkins/ref/plugins.txt
-ENV DOCKER_HOST unix:///var/run/docker.sock
+COPY resources/plugins.txt /usr/share/jenkins/ref/plugins.txt
+COPY resources/jcac.yaml /usr/share/jenkins/ref/jcac.yaml
 RUN /usr/local/bin/install-plugins.sh < /usr/share/jenkins/ref/plugins.txt
+ENV DOCKER_HOST unix:///var/run/docker.sock
+ENV CASC_JENKINS_CONFIG /usr/share/jenkins/ref/jcac.yaml
